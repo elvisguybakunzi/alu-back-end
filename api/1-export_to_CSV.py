@@ -4,27 +4,49 @@ Exports employee tasks to a CSV file based on employee ID.
 """
 
 import csv
+import json
 import requests
 from sys import argv
 
 
 if __name__ == "__main__":
-    if len(argv) != 2:
-        exit()
+    """
+        request user info by employee ID
+    """
+    request_employee = requests.get(
+        'https://jsonplaceholder.typicode.com/users/{}/'.format(argv[1]))
+    """
+        convert json to dictionary
+    """
+    user = json.loads(request_employee.text)
+    """
+        extract username
+    """
+    username = user.get("username")
 
-    employee_id = argv[1]
+    """
+        request user's TODO list
+    """
+    request_todos = requests.get(
+        'https://jsonplaceholder.typicode.com/users/{}/todos'.format(argv[1]))
+    """
+        dictionary to store task status(completed) in boolean format
+    """
+    tasks = {}
+    """
+        convert json to list of dictionaries
+    """
+    user_todos = json.loads(request_todos.text)
+    """
+        loop through dictionary & get completed tasks
+    """
+    for dictionary in user_todos:
+        tasks.update({dictionary.get("title"): dictionary.get("completed")})
 
-    url_user = 'https://jsonplaceholder.typicode.com/users/{}'.format(employee_id)
-    url_todos = 'https://jsonplaceholder.typicode.com/todos?userId={}'.format(employee_id)
-
-    response_user = requests.get(url_user).json()
-    response_todos = requests.get(url_todos).json()
-
-    employee_name = response_user.get('name')
-    filename = "{}.csv".format(employee_id)
-
-    with open(filename, mode='w', newline='') as file:
-        writer = csv.writer(file, quoting=csv.QUOTE_ALL)
-        for task in response_todos:
-            writer.writerow([employee_id, employee_name, task.get('completed'), task.get('title')])
-
+    """
+        export to CSV
+    """
+    with open('{}.csv'.format(argv[1]), mode='w') as file:
+        file_editor = csv.writer(file, delimiter=',', quoting=csv.QUOTE_ALL)
+        for k, v in tasks.items():
+            file_editor.writerow([argv[1], username, v, k])
