@@ -4,26 +4,26 @@ Gathers data from an API based on employee ID.
 """
 
 import requests
-from sys import argv
+import sys
 
+""" Function to gather data from an API """
 
 if __name__ == "__main__":
-    if len(argv) != 2:
-        exit()
+    employee_id = sys.argv[1]
+    url = "https://jsonplaceholder.typicode.com/users/{}".format(employee_id)
 
-    employee_id = argv[1]
+    todo = "https://jsonplaceholder.typicode.com/todos?userId={}"
+    todo = todo.format(employee_id)
 
-    url_user = 'https://jsonplaceholder.typicode.com/users/{}'.format(employee_id)
-    url_todos = 'https://jsonplaceholder.typicode.com/todos?userId={}'.format(employee_id)
+    user_info = requests.request("GET", url).json()
+    todo_info = requests.request("GET", todo).json()
 
-    response_user = requests.get(url_user).json()
-    response_todos = requests.get(url_todos).json()
+    employee_name = user_info.get("name")
+    total_tasks = list(filter(lambda x: (x["completed"] is True), todo_info))
+    task_com = len(total_tasks)
+    total_task_done = len(todo_info)
 
-    employee_name = response_user.get('name')
-    todos_completed = [task for task in response_todos if task.get('completed')]
-    total_tasks = len(response_todos)
+    print("Employee {} is done with tasks({}/{}):".format(employee_name,
+          task_com, total_task_done))
 
-    print("Employee {} is done with tasks({}/{}):".format(employee_name, len(todos_completed), total_tasks))
-    for task in todos_completed:
-        print("\t{}".format(task.get('title')))
-
+    [print("\t {}".format(task.get("title"))) for task in total_tasks]
